@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -38,6 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    #    "rest_framework.authtoken",
+    "rest_framework_simplejwt.token_blacklist",
     "social_media",
     "users",
 ]
@@ -119,3 +122,33 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+
+MEDIA_ROOT = BASE_DIR / "media"
+
+MEDIA_URL = "/media/"
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    #    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    #    "DEFAULT_PERMISSION_CLASSES": [
+    #        "airport.permissions.IsAdminOrIfAuthenticatedReadOnly",
+    #   ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    #    "DEFAULT_THROTTLE_CLASSES": [
+    #        "rest_framework.throttling.AnonRateThrottle",
+    #        "rest_framework.throttling.UserRateThrottle"
+    #   ],
+    #    "DEFAULT_THROTTLE_RATES": {
+    #        "anon": "10/minute",
+    #        "user": "30/minute",
+    #   },
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=3),
+    "ROTATE_REFRESH_TOKENS": False,
+}
