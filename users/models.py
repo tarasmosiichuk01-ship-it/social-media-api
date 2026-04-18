@@ -50,8 +50,8 @@ class User(AbstractUser):
     )
     bio = models.TextField(_("bio"), null=True, blank=True)
     avatar = models.ImageField(null=True, upload_to=user_image_file_path)
-    follower = models.ManyToManyField(
-        "self", symmetrical=False, related_name="followers"
+    following = models.ManyToManyField(
+        "self", symmetrical=False, related_name="followers", blank=True
     )
 
     USERNAME_FIELD = "email"
