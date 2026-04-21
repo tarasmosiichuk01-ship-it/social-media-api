@@ -61,7 +61,7 @@ class UserRegistrationSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
-        password2 = validated_data.pop("password2", None)
+        password2 = validated_data.pop("password2")
         return get_user_model().objects.create_user(password=password, **validated_data)
 
 
@@ -83,3 +83,10 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ("id", "username", "avatar")
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = get_user_model()
+        fields = ("id", "username", "bio", "avatar")

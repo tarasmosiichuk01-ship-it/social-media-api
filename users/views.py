@@ -1,17 +1,14 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import status, generics, filters
-from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework import status, generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from users.serializers import (
     UserProfileSerializer,
     LogoutSerializer,
-    UserRegistrationSerializer,
     UserListSerializer,
     UserDetailSerializer,
 )
@@ -20,11 +17,6 @@ from users.serializers import (
 class RegisterUserView(generics.CreateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = ()
-
-
-class LoginUserView(ObtainAuthToken):
-    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
-    serializer_class = UserRegistrationSerializer
 
 
 class LogoutUserView(APIView):
@@ -48,24 +40,13 @@ class ManageProfileUserView(generics.RetrieveUpdateAPIView):
 
 class UserProfileView(generics.RetrieveAPIView):
     queryset = get_user_model().objects.all()
-    serializer_class = UserProfileSerializer
+    serializer_class = UserDetailSerializer
+    permission_classes = (IsAuthenticated,)
 
 
-@extend_schema(
-    parameters=[
-        OpenApiParameter(
-            "username",
-            type=str,
-            description="Filter by username",
-            required=False,
-        ),
-    ]
-)
 class UserListView(generics.ListAPIView):
     queryset = get_user_model().objects.all()
     serializer_class = UserListSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ["username", "email"]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -75,6 +56,20 @@ class UserListView(generics.ListAPIView):
             queryset = queryset.filter(username__icontains=username)
 
         return queryset
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "username",
+                type=str,
+                description="Filter by username",
+                required=False,
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        """Get list of users"""
+        return super().list(request, *args, **kwargs)
 
 
 class FollowUnfollowView(APIView):
