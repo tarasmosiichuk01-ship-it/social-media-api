@@ -2,9 +2,11 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status, permissions
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from social_media.models import Post, Like, Comment
 from social_media.permissions import IsAuthorOrReadOnly
+from social_media.tasks import create_scheduled_post
 from social_media.serializers import (
     PostSerializer,
     PostListSerializer,
@@ -14,21 +16,20 @@ from social_media.serializers import (
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
-    permission_classes = (IsAuthorOrReadOnly,)
+    permission_classes = (IsAuthenticated, IsAuthorOrReadOnly)
 
     def get_queryset(self):
         queryset = self.queryset
 
         user = self.request.user
-        following_users = user.following.values_list("following", flat=True)
+        following_users = user.following.all()
 
         if self.action == "list":
             queryset = (
-                Post.objects.filter(author__in=following_users)
+                Post.objects.filter(author__in=following_users, is_published=True)
                 .select_related("author")
                 .prefetch_related("likes", "hashtags", "comments")
             )
-            return queryset
 
         hashtag = self.request.query_params.get("hashtag")
         author = self.request.query_params.get("author")
@@ -36,7 +37,9 @@ class PostViewSet(viewsets.ModelViewSet):
         if hashtag:
             queryset = queryset.filter(hashtags__name__iexact=hashtag)
         if author:
-            queryset = queryset.filter(author__id=author.id)
+            queryset = queryset.filter(author__id=author)
+
+        queryset = queryset.filter(is_published=True)
 
         return queryset
 
@@ -46,7 +49,15 @@ class PostViewSet(viewsets.ModelViewSet):
         return PostSerializer
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        scheduled_at = serializer.validated_data.get("scheduled_at")
+
+        post = serializer.save(
+            author=self.request.user,
+            is_published=scheduled_at is None,
+        )
+
+        if scheduled_at:
+            create_scheduled_post.apply_async(args=[post.id], eta=scheduled_at)
 
     @action(detail=True, methods=["post"], url_path="like")
     def like(self, request, pk=None):
@@ -64,7 +75,7 @@ class PostViewSet(viewsets.ModelViewSet):
             OpenApiParameter(
                 "author",
                 type={"type": "array", "items": {"type": "number"}},
-                description="Filter by author id ex. ?airplane_types=2,3",
+                description="Filter by author id ex. ?author=2,3",
                 required=False,
                 explode=False,
             ),
@@ -77,12 +88,21 @@ class PostViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    queryset = Comment.objects.all()
+    permission_classes = (IsAuthenticated, IsAuthorOrReadOnly)
 
     def get_queryset(self):
-        return Comment.objects.filter(post_id=self.kwargs["post_pk"]).select_related(
-            "author"
-        )
+        queryset = self.queryset.filter(post_id=self.kwargs["post_pk"])
+
+        authors = self.request.query_params.get("authors")
+        posts = self.request.query_params.get("posts")
+
+        if authors:
+            queryset = queryset.filter(author__id__in=authors.split(","))
+        if posts:
+            queryset = queryset.filter(post__id__in=posts.split(","))
+
+        return queryset
 
     def perform_create(self, serializer):
         post = get_object_or_404(Post, pk=self.kwargs["post_pk"])

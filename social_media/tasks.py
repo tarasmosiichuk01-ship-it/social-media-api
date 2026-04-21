@@ -7,8 +7,9 @@ def create_scheduled_post(post_id: int) -> str:
 
     try:
         post = Post.objects.get(id=post_id)
-        post.is_published = True
-        post.save()
+        if not post.is_published:
+            post.is_published = True
+            post.save()
         return f"Post {post_id} published successfully"
     except Post.DoesNotExist:
         return f"Post {post_id} not found"
