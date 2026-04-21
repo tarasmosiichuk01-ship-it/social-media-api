@@ -10,6 +10,8 @@ class Post(models.Model):
     image = models.ImageField()
     created_at = models.DateTimeField(auto_now_add=True)
     hashtags = models.ManyToManyField("Hashtag", blank=True, related_name="posts")
+    scheduled_at = models.DateTimeField(null=True, blank=True)
+    is_published = models.BooleanField(default=True)
 
 
 class Hashtag(models.Model):
