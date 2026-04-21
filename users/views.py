@@ -79,12 +79,16 @@ class FollowUnfollowView(APIView):
 
         if request.user == target_user:
             return Response(
-                {"detail": "Cannot follow yourself"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Cannot follow yourself"},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
         if request.user.following.filter(id=target_user.id).exists():
             request.user.following.remove(target_user)
-            return Response({"detail": "Unfollowed"}, status=status.HTTP_200_OK)
+            return Response(
+                {"detail": "Unfollowed"},
+                status=status.HTTP_200_OK
+            )
 
         request.user.following.add(target_user)
         return Response({"detail": "Followed"}, status=status.HTTP_200_OK)

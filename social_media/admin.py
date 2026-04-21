@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from social_media.models import Post, Hashtag, Like, Comment
+
+admin.register(Post)
+admin.register(Hashtag)
+admin.register(Like)
+admin.register(Comment)

@@ -26,7 +26,11 @@ urlpatterns = [
     path("token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     path("token/verify/", TokenVerifyView.as_view(), name="token-verify"),
     path("me/", ManageProfileUserView.as_view(), name="manage-user"),
-    path("<int:pk>/follow/", FollowUnfollowView.as_view(), name="follow-unfollow"),
+    path(
+        "<int:pk>/follow/",
+        FollowUnfollowView.as_view(),
+        name="follow-unfollow"
+    ),
     path("me/following/", FollowingListView.as_view(), name="following-list"),
     path("me/followers/", FollowersListView.as_view(), name="followers-list"),
 ]

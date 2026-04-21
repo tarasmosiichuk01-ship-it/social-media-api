@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -26,7 +26,10 @@ class PostViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             queryset = (
-                Post.objects.filter(author__in=following_users, is_published=True)
+                Post.objects.filter(
+                    author__in=following_users,
+                    is_published=True
+                )
                 .select_related("author")
                 .prefetch_related("likes", "hashtags", "comments")
             )
@@ -62,7 +65,10 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], url_path="like")
     def like(self, request, pk=None):
         post = self.get_object()
-        like, created = Like.objects.get_or_create(user=request.user, post=post)
+        like, created = Like.objects.get_or_create(
+            user=request.user,
+            post=post
+        )
 
         if not created:
             like.delete()

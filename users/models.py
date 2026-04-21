@@ -3,7 +3,10 @@ import uuid
 from django.utils.text import slugify
 from django.db import models
 from django.utils.translation import gettext as _
-from django.contrib.auth.models import AbstractUser, UserManager as DjangoUserManager
+from django.contrib.auth.models import (
+    AbstractUser,
+    UserManager as DjangoUserManager
+)
 
 
 class UserManager(DjangoUserManager):
@@ -38,7 +41,8 @@ class UserManager(DjangoUserManager):
 
 def user_image_file_path(instance: "User", filename: str) -> pathlib.Path:
     filename = (
-        f"{slugify(instance.username)}-{uuid.uuid4()}" + pathlib.Path(filename).suffix
+        f"{slugify(instance.username)}-{uuid.uuid4()}"
+        + pathlib.Path(filename).suffix
     )
     return pathlib.Path("uploads/users/") / pathlib.Path(filename)
 
@@ -49,7 +53,11 @@ class User(AbstractUser):
         _("username"), max_length=63, unique=True, null=True, blank=True
     )
     bio = models.TextField(_("bio"), null=True, blank=True)
-    avatar = models.ImageField(null=True, blank=True, upload_to=user_image_file_path)
+    avatar = models.ImageField(
+        null=True,
+        blank=True,
+        upload_to=user_image_file_path
+    )
     following = models.ManyToManyField(
         "self", symmetrical=False, related_name="followers", blank=True
     )

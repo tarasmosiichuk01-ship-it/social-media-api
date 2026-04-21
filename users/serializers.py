@@ -62,7 +62,10 @@ class UserRegistrationSerializer(serializers.Serializer):
     def create(self, validated_data):
         password = validated_data.pop("password", None)
         password2 = validated_data.pop("password2")
-        return get_user_model().objects.create_user(password=password, **validated_data)
+        return get_user_model().objects.create_user(
+            password=password,
+            **validated_data
+        )
 
 
 class LogoutSerializer(serializers.Serializer):

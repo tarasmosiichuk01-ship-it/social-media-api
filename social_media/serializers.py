@@ -63,7 +63,9 @@ class PostSerializer(serializers.ModelSerializer):
     def _set_hashtags(self, post, names):
         hashtags = []
         for name in names:
-            hashtag, _ = Hashtag.objects.get_or_create(name=name.lower().strip())
+            hashtag, _ = Hashtag.objects.get_or_create(
+                name=name.lower().strip()
+            )
             hashtags.append(hashtag)
         post.hashtags.set(hashtags)
 
@@ -72,7 +74,10 @@ class PostListSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField(read_only=True)
     likes = serializers.IntegerField(source="likes.count", read_only=True)
     hashtags = HashtagSerializer(many=True, read_only=True)
-    comments = serializers.IntegerField(source="comments.count", read_only=True)
+    comments = serializers.IntegerField(
+        source="comments.count",
+        read_only=True
+    )
 
     class Meta:
         model = Post
