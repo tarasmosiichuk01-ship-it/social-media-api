@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from rest_framework import status, generics, viewsets, filters
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from rest_framework import status, generics, filters
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -50,6 +51,16 @@ class UserProfileView(generics.RetrieveAPIView):
     serializer_class = UserProfileSerializer
 
 
+@extend_schema(
+    parameters=[
+        OpenApiParameter(
+            "username",
+            type=str,
+            description="Filter by username",
+            required=False,
+        ),
+    ]
+)
 class UserListView(generics.ListAPIView):
     queryset = get_user_model().objects.all()
     serializer_class = UserListSerializer

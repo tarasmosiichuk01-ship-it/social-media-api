@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status, permissions
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from social_media.models import Post, Like, Comment
@@ -58,6 +59,21 @@ class PostViewSet(viewsets.ModelViewSet):
 
         return Response({"liked": True}, status=status.HTTP_201_CREATED)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "author",
+                type={"type": "array", "items": {"type": "number"}},
+                description="Filter by author id ex. ?airplane_types=2,3",
+                required=False,
+                explode=False,
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        """Get list of posts"""
+        return super().list(request, *args, **kwargs)
+
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
@@ -71,3 +87,25 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         post = get_object_or_404(Post, pk=self.kwargs["post_pk"])
         serializer.save(author=self.request.user, post=post)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "authors",
+                type={"type": "array", "items": {"type": "number"}},
+                description="Filter by author id ex. ?authors=2,3",
+                required=False,
+                explode=False,
+            ),
+            OpenApiParameter(
+                "posts",
+                type={"type": "array", "items": {"type": "number"}},
+                description="Filter by posts id ex. ?posts=2,3",
+                required=False,
+                explode=False,
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        """Get list of comments"""
+        return super().list(request, *args, **kwargs)
