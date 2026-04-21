@@ -3,7 +3,10 @@ import os
 from celery import Celery
 
 # Set the default Django settings module for the 'celery' program.
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "social_media_service.settings")
+os.environ.setdefault(
+    "DJANGO_SETTINGS_MODULE",
+    "social_media_service.settings"
+)
 
 app = Celery("social_media_service")
 
