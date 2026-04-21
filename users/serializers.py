@@ -1,6 +1,6 @@
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
@@ -9,8 +9,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ("id", "email", "password", "is_staff", "followers")
-        read_only_fields = ("id", "is_staff")
+        fields = ("id", "email", "password", "username", "bio", "avatar")
         extra_kwargs = {
             "password": {
                 "write_only": True,
@@ -26,7 +25,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """update user with encrypted password"""
-        password = validated_data.pop("password")
+        password = validated_data.pop("password", None)
         user = super().update(instance, validated_data)
 
         if password:
@@ -37,33 +36,33 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class UserRegistrationSerializer(serializers.Serializer):
-    email = serializers.CharField(label=_("Email"), write_only=True)
+    email = serializers.EmailField(label=_("Email"), write_only=True)
     password = serializers.CharField(
         label=_("Password"),
         style={"input_type": "password"},
         trim_whitespace=False,
         write_only=True,
     )
-    token = serializers.CharField(label=_("Token"), read_only=True)
+    password2 = serializers.CharField(
+        label=_("Password"),
+        style={"input_type": "password"},
+        trim_whitespace=False,
+        write_only=True,
+    )
 
     def validate(self, attrs):
-        email = attrs.get("email")
         password = attrs.get("password")
+        password2 = attrs.get("password2")
 
-        if email and password:
-            user = authenticate(
-                request=self.context.get("request"), email=email, password=password
-            )
+        if password != password2:
+            raise serializers.ValidationError("Passwords don't match")
 
-            if not user:
-                msg = _("Unable to log in with provided credentials.")
-                raise serializers.ValidationError(msg, code="authorization")
-        else:
-            msg = _("Must include 'email' and 'password'.")
-            raise serializers.ValidationError(msg, code="authorization")
-
-        attrs["user"] = user
         return attrs
+
+    def create(self, validated_data):
+        password = validated_data.pop("password", None)
+        password2 = validated_data.pop("password2", None)
+        return get_user_model().objects.create_user(password=password, **validated_data)
 
 
 class LogoutSerializer(serializers.Serializer):
@@ -84,9 +83,3 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ("id", "username", "avatar")
-
-
-class UserDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ("id", "email", "first_name", "last_name", "bio", "avatar")
