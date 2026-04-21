@@ -18,8 +18,8 @@ from rest_framework_simplejwt.views import (
 app_name = "users"
 
 urlpatterns = [
-    path("", UserListView.as_view(), name="user-list"),
-    path("<int:pk>/", UserProfileView.as_view(), name="user-detail"),
+    path("users/", UserListView.as_view(), name="user-list"),
+    path("users/<int:pk>/", UserProfileView.as_view(), name="user-detail"),
     path("register/", RegisterUserView.as_view(), name="register"),
     path("login/", TokenObtainPairView.as_view(), name="login"),
     path("logout/", LogoutUserView.as_view(), name="logout"),

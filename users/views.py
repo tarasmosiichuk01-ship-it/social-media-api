@@ -45,11 +45,10 @@ class UserProfileView(generics.RetrieveAPIView):
 
 
 class UserListView(generics.ListAPIView):
-    queryset = get_user_model().objects.all()
     serializer_class = UserListSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = get_user_model().objects.all()
         username = self.request.GET.get("username")
 
         if username:
