@@ -1,0 +1,78 @@
+services:
+  app:
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./:/app
+      - my_media:/app/media
+    command: >
+      sh -c "python manage.py migrate && 
+             python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+
+  db:
+    image: postgres:16.0-alpine3.18
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - my_db:/var/lib/postgresql/data
+
+  celery:
+    build:
+      context: .
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - my_media:/app/media
+    command: >
+      sh -c "celery -A social_media_service worker -l info"
+    depends_on:
+      redis:
+        condition: service_started
+      app:
+        condition: service_started
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  celery-beat:
+    build:
+      context: .
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - my_media:/app/media
+    command: >
+      sh -c "celery -A social_media_service beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    depends_on:
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+
+
+volumes:
+  my_db:
+  my_media:
